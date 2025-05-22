@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+    <meta charset="UTF-8">
+    <title>בדיקת דיגומי רשת מתקדמת</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            direction: rtl;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #121212;
+            color: #f2f2f2;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .centered {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .scan-box {
+            background: #212121;
+            padding: 32px 48px;
+            border-radius: 22px;
+            box-shadow: 0 2px 36px #0009;
+            text-align: center;
+        }
+        .scan-progress {
+            margin: 30px 0;
+            width: 270px;
+            height: 18px;
+            background: #222;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .scan-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #f00 40%, #f8c605 100%);
+            width: 0%;
+            transition: width 0.18s;
+        }
+        .hidden { display: none; }
+
+        .fake-alert {
+            position: fixed;
+            z-index: 99999;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(25,0,0,0.96);
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            animation: shake 1s infinite;
+        }
+        .fake-alert .big {
+            font-size: 2.2em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #ff3535;
+        }
+        .fake-alert .smaller {
+            font-size: 1.1em;
+            margin-top: 12px;
+            color: #ffeb3b;
+            font-weight: bold;
+        }
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-2px, -1px) rotate(-1deg);}
+            20% { transform: translate(-2px, 2px) rotate(1deg);}
+            30% { transform: translate(2px, 1px) rotate(0deg);}
+            40% { transform: translate(1px, -2px) rotate(1deg);}
+            50% { transform: translate(-1px, 2px) rotate(-1deg);}
+            60% { transform: translate(-2px, 1px) rotate(0deg);}
+            70% { transform: translate(2px, 1px) rotate(-1deg);}
+            80% { transform: translate(-1px, -1px) rotate(1deg);}
+            90% { transform: translate(2px, 2px) rotate(0deg);}
+            100% { transform: translate(1px, -2px) rotate(-1deg);}
+        }
+
+        .final-message {
+            background: #171717;
+            border-radius: 16px;
+            padding: 34px 26px;
+            text-align: center;
+            font-size: 1.45em;
+            color: #17e660;
+            border: 2px solid #17e660;
+            box-shadow: 0 0 28px #16ff1640;
+            margin-top: 28px;
+        }
+    </style>
+</head>
+<body>
+    <div class="centered" id="mainDiv">
+        <div class="scan-box" id="scanBox">
+            <h2>בדיקת דיגומי רשת מתקדמת</h2>
+            <p>יש ללחוץ לסריקה מלאה של המכשיר</p>
+            <button id="scanBtn" style="font-size:1.15em;padding:12px 28px;border-radius:9px;border:none;background:#0090ff;color:#fff;cursor:pointer;">התחל סריקה</button>
+        </div>
+        <div id="progressDiv" class="hidden">
+            <h3>סורק את המכשיר שלך...</h3>
+            <div class="scan-progress">
+                <div class="scan-bar" id="scanBar"></div>
+            </div>
+            <div id="progressText">בודק רשתות ופרצות...</div>
+        </div>
+    </div>
+    <div class="fake-alert hidden" id="fakeAlert">
+        <div class="big">🚨 הטלפון שלך בשליטה מרחוק! 🚨</div>
+        <div>כל הקבצים שלך הועתקו לשרת חיצוני.<br>המצלמה הופעלה.<br>כל ההודעות והתמונות זמינות לנו.</div>
+        <div class="smaller" id="countdown">מוחק את כל הקבצים בעוד <span id="secLeft">5</span> שניות...</div>
+    </div>
+    <div id="finalJoke" class="final-message hidden">
+        😂 סתם אחי, אל תתעצבן!<br>
+        <span style="font-size:1em;color:#fff;">זה רק טרול קטן.<br>לא נגעתי לך בכלום, הכל טוב!</span>
+    </div>
+    <audio id="alarmSound" src="https://cdn.pixabay.com/audio/2022/08/20/audio_12b2b66e9e.mp3"></audio>
+    <script>
+        const scanBtn = document.getElementById('scanBtn');
+        const scanBox = document.getElementById('scanBox');
+        const progressDiv = document.getElementById('progressDiv');
+        const scanBar = document.getElementById('scanBar');
+        const progressText = document.getElementById('progressText');
+        const fakeAlert = document.getElementById('fakeAlert');
+        const countdown = document.getElementById('countdown');
+        const secLeft = document.getElementById('secLeft');
+        const finalJoke = document.getElementById('finalJoke');
+        const alarmSound = document.getElementById('alarmSound');
+
+        let progress = 0;
+        let interval;
+        scanBtn.onclick = function() {
+            scanBox.classList.add('hidden');
+            progressDiv.classList.remove('hidden');
+            progress = 0;
+            progressText.textContent = "בודק רשתות ופרצות...";
+            scanBar.style.width = '0%';
+
+            interval = setInterval(() => {
+                progress += Math.random() * 18 + 7;
+                if(progress < 30) progressText.textContent = "סורק וירוסים...";
+                else if(progress < 65) progressText.textContent = "מאתר חולשות קריטיות...";
+                else if(progress < 99) progressText.textContent = "נמצאה פעילות חריגה...";
+                else progressText.textContent = "סיום הסריקה...";
+                scanBar.style.width = Math.min(progress, 100) + "%";
+                if(progress >= 100) {
+                    clearInterval(interval);
+                    setTimeout(showAlert, 1200);
+                }
+            }, 800);
+        };
+
+        function showAlert() {
+            progressDiv.classList.add('hidden');
+            fakeAlert.classList.remove('hidden');
+            alarmSound.play();
+            let count = 5;
+            secLeft.textContent = count;
+            let cd = setInterval(() => {
+                count--;
+                secLeft.textContent = count;
+                if(count <= 0) {
+                    clearInterval(cd);
+                    alarmSound.pause();
+                    alarmSound.currentTime = 0;
+                    fakeAlert.classList.add('hidden');
+                    setTimeout(() => {
+                        finalJoke.classList.remove('hidden');
+                    }, 800);
+                }
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
